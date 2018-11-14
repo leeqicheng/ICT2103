@@ -126,8 +126,8 @@ router.post('/admin', function (req, res) {
 
                     var paremeters = {
                         school_room_name: sql_name,
-                        school_room_size: sql_description,
-                        school_room_description: sql_size,
+                        school_room_size: sql_size,
+                        school_room_description: sql_description,
                         location_ID: sql_locationid,
                     };
                     var query = db.query('INSERT INTO school_room SET ?', paremeters, function (err, result) {

@@ -1,10 +1,11 @@
 var express = require('express');
 var router = express.Router();
-var db = require('./connection.js'); // db is pool
+const bcrypt = require('bcrypt');
+var randtoken = require('rand-token');
 var common = require('./common.js');
+var db = require('./connection.js'); // db is pool
 var fs = require("fs");
 
-//Get all Lost Report
 router.get('/', function(req, res) {
   if (req.get("token") == null || req.get("token") == "") {
     res.statusCode = 200;
@@ -16,19 +17,22 @@ router.get('/', function(req, res) {
     var token = req.get("token");
     common.checksession(db, token, function(returnValue) {
       if (returnValue) {
-        db.query('SELECT ls.* , location_name , sr.school_room_name FROM lost_found ls inner join school_room sr inner join location l where ls.school_room_ID = sr.school_room_ID and sr.location_ID = l.location_ID ORDER BY lost_found_created DESC;', function(err, rows, fields) {
-          if (err) {
-            console.log(err);
-            res.statusCode = 200
-            return res.json({
-              respond: "Database ran into some problem",
-              errors: true
-            });
-          } else {
-            var jsonArray = [];
-            if (rows.length) {
-              for (var i = 0; i < rows.length; i++) {
-                 var jsonObject = {
+        db.establishConnection(function(conn) {
+          conn.collection("LostAndFound").find().sort({
+            lost_found_created: -1
+          }).toArray(function(err, rows) {
+            if (err) {
+              console.log(err);
+              res.statusCode = 200
+              return res.json({
+                respond: "Database ran into some problem",
+                errors: true
+              });
+            } else {
+              var jsonArray = [];
+              if (rows.length) {
+                for (var i = 0; i < rows.length; i++) {
+                  var jsonObject = {
                     id: rows[i].lost_found_ID,
                     date: rows[i].lost_found_created,
                     image: rows[i].lost_found_image,
@@ -36,14 +40,15 @@ router.get('/', function(req, res) {
                     description: rows[i].lost_found_description,
                     location: rows[i].location_name,
                   }
-                   jsonArray.push(jsonObject);
+                  jsonArray.push(jsonObject);
+                }
               }
+              return res.json({
+                respond: jsonArray,
+                errors: false
+              });
             }
-            return res.json({
-              respond: jsonArray,
-              errors: false
-            });
-          }
+          });
         });
       } else {
         res.statusCode = 200
@@ -55,7 +60,7 @@ router.get('/', function(req, res) {
     });
   }
 });
-// New Lost Report
+
 router.post('/', function(req, res) {
   if (req.get("token") == null || req.get("token") == "") {
     res.statusCode = 200;
@@ -87,28 +92,31 @@ router.post('/', function(req, res) {
                 lost_found_description: req.body.description,
                 secure_login_ID: returnValue,
               };
-              var query = db.query('INSERT INTO lost_found SET ?', paremeters, function(err, result) {
-                if (err) {
-                  res.statusCode = 200
-                  return res.json({
-                    respond: "Database ran into problem",
-                    errors: truelost_found
-                  });
-                } else {
-                  if (result) {
-                    return res.json({
-                      respond: "Successfully reported",
-                      errors: false
-                    });
-                  } else {
+              db.establishConnection(function(conn) {
+                conn.collection("LostAndFound").insertOne(paremeters, function(err, result) {
+                  if (err) {
                     res.statusCode = 200
                     return res.json({
-                      respond: "Report failed",
-                      errors: true
+                      respond: "Database ran into problem",
+                      errors: truelost_found
                     });
+                  } else {
+                    if (result) {
+                      return res.json({
+                        respond: "Successfully reported",
+                        errors: false
+                      });
+                    } else {
+                      res.statusCode = 200
+                      return res.json({
+                        respond: "Report failed",
+                        errors: true
+                      });
+                    }
                   }
-                }
+                });
               });
+
             } else {
               res.statusCode = 200
               return res.json({

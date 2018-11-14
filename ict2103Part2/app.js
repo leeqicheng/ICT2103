@@ -18,7 +18,8 @@ app.use(bodyParser.json());
 
 var loginController    = require('./controllers/login');
 app.use('/login', loginController);
-
+var booksController    = require('./controllers/books');
+app.use('/books', booksController);
 
 var dir = path.join(__dirname, 'public');
 

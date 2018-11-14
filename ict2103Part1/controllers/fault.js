@@ -29,17 +29,21 @@ router.get('/', function(req, res) {
             var fixed = "Not Fixed";
             if (rows.length) {
               for (var i = 0; i < rows.length; i++) {
+                var fixed = "";
                 if (rows[i].fault_reporting_fixed === 0) {
-                  var jsonObject = {
+                    fixed = "Not Fixed";
+                } else {
+                  fixed = "Fixed";
+                }
+                    var jsonObject = {
                     id: rows[i].fault_reporting_ID,
                     date: rows[i].fault_reporting_date,
                     image: rows[i].fault_reporting_image,
                     classroom: rows[i].school_room_name,
                     description: rows[i].fault_reporting_description,
                     location: rows[i].location_name,
-                    fixed: "Not Fixed"
+                    fixed: fixed
                   }
-                }
                 jsonArray.push(jsonObject);
               }
             }
@@ -89,10 +93,11 @@ router.post('/', function(req, res) {
                 fault_reporting_image: filename,
                 school_room_ID: req.body.schoolroom,
                 fault_reporting_description: req.body.description,
-                student_ID: returnValue,
+                secure_login_ID: returnValue,
               };
               var query = db.query('INSERT INTO fault_reporting SET ?', paremeters, function(err, result) {
                 if (err) {
+                  console.log(err)
                   res.statusCode = 200
                   return res.json({
                     respond: "Database ran into problem",
@@ -138,5 +143,51 @@ router.post('/', function(req, res) {
     });
   }
 });
+
+router.put('/admin/:id', function(req, res) {
+  if (req.get("token") == null || req.get("token") == "") {
+    res.statusCode = 200;
+    return res.json({
+      respond: "Invalid Token Key",
+      errors: true
+    });
+  } else {
+    var id = req.params.id;
+    var token = req.get("token");
+    common.checksession(db, token, function(returnValue) {
+      if (returnValue) {
+        if (req.body.fixed !== "" && req.body.fixed != null) {
+           var query = db.query('UPDATE fault_reporting SET fault_reporting_fixed = ? where fault_reporting_ID = ? ', [req.body.fixed, id], function(err, result) {
+            if (err) {
+              res.statusCode = 200;
+              return res.json({
+                respond: "Database error",
+                error: true
+              });
+            } else {
+              return res.json({
+                respond: "Successfully Updated ",
+                errors: false
+              });
+            }
+          });
+        } else {
+          res.statusCode = 200;
+          return res.json({
+            respond: "Missing Fields",
+            errors: true
+          });
+        }
+      } else {
+        res.statusCode = 200;
+        return res.json({
+          respond: "Invalid Token Key",
+          errors: true
+        });
+      }
+    });
+  }
+});
+
 
 module.exports = router;

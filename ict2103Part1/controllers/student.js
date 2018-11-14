@@ -1,4 +1,4 @@
-var express = require('express');
+ var express = require('express');
 var router = express.Router();
 
 var db = require('./connection.js'); // db is pool
@@ -135,6 +135,57 @@ router.put('/', function(req, res) {
   }
 });
 
+router.get('/studentlist', function(req, res) {
+
+  if (req.get("token") == null || req.get("token") == "") {
+    res.statusCode = 200;
+    return res.json({
+      respond: "Invalid Token Key",
+      errors: true
+    });
+  } else {
+    var token = req.get("token");
+    common.checksession(db, token, function(returnValue) {
+      if (returnValue) {
+        db.query('SELECT * FROM student;', function(err, rows, fields) {
+          if (err) {
+            res.statusCode = 200
+            return res.json({
+              respond: "Database ran into some problem",
+              errors: true
+            });
+          } else {
+            var jsonArray = [];
+            if (rows.length) {
+              for (var i = 0; i < rows.length; i++) {
+                if (rows[i].student_active === 0 && rows[i].secure_login_ID >= 1) {
+                  var jsonObject = {
+                    accountid: rows[i].secure_login_ID,
+                    studentname: rows[i].student_name,
+                    studentmatrics: rows[i].student_matrics,
+                    studentimage: rows[i].student_image
+                  }
+                  jsonArray.push(jsonObject);
+                }
+              }
+            }
+            return res.json({
+              respond: jsonArray,
+              errors: false
+            });
+          }
+        });
+      } else {
+        res.statusCode = 200
+        return res.json({
+          respond: "Invalid session",
+          errors: true
+        });
+      }
+    });
+  }
+});
+
 //retrieve all student 
 router.get('/admin', function(req, res) {
 
@@ -156,11 +207,11 @@ router.get('/admin', function(req, res) {
               errors: true
             });
           } else {
-           var jsonArray = [];
+            var jsonArray = [];
             if (rows.length) {
               for (var i = 0; i < rows.length; i++) {
                 var jsonObject = {
-                  accountid : rows[i].secure_login_ID,
+                  accountid: rows[i].secure_login_ID,
                   studentname: rows[i].student_name,
                   studentmatrics: rows[i].student_matrics,
                   studentphone: rows[i].student_phone,
@@ -168,7 +219,7 @@ router.get('/admin', function(req, res) {
                   studentaddress: rows[i].student_address,
                   studentcourse: rows[i].course_ID,
                   studentimage: rows[i].student_image,
-                  studentactive :  rows[i].student_active,
+                  studentactive: rows[i].student_active,
                 }
                 jsonArray.push(jsonObject);
               }
@@ -226,7 +277,7 @@ router.get('/admin/:id', function(req, res) {
                   studentaddress: rows[i].student_address,
                   studentcourse: rows[i].course_ID,
                   studentimage: rows[i].student_image,
-                  studentactive :  rows[i].student_active,
+                  studentactive: rows[i].student_active,
                 }
               }
             }
@@ -268,7 +319,7 @@ router.post('/admin', function(req, res) {
             if (err) {
               res.statusCode = 200;
               return res.json({
-                
+
                 respond: "Creating Account Failed , Database Error",
                 errors: true
               });
