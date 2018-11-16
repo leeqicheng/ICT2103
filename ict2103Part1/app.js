@@ -18,10 +18,12 @@ app.use(bodyParser.json());
 var loginController    = require('./controllers/login');
 var userController    = require('./controllers/user');
 var studentController  = require('./controllers/student');
+var adminController  = require('./controllers/admin');
 
 app.use('/login', loginController);
 app.use('/user', userController);
 app.use('/student', studentController);
+app.use('/admin', adminController);
 
 var eventController    = require('./controllers/event');
 var locationController    = require('./controllers/location');
@@ -33,6 +35,7 @@ var faultController    = require('./controllers/fault');
 var lostController    = require('./controllers/lostandfound');
 var courseController    = require('./controllers/course');
 var faultcloudController    = require('./controllers/faultcloud');
+var departmentController    = require('./controllers/department');
 
 app.use('/event', eventController);
 app.use('/location', locationController);
@@ -44,6 +47,7 @@ app.use('/fault', faultController);
 app.use('/lost', lostController);
 app.use('/course', courseController);
 app.use('/faultcloud', faultcloudController);
+app.use('/department', departmentController);
 
 var dir = path.join(__dirname, 'public');
 

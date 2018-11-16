@@ -230,7 +230,7 @@ router.post('/admin', function(req, res) {
               event_created_by: req.body.eventcreatedby,
               event_url: req.body.eventurl
             };
-            
+
             var query = db.query('INSERT INTO event SET ?', paremeters, function(err, result) {
               if (err) {
                 res.statusCode = 200
@@ -281,22 +281,47 @@ router.put('/admin/:id', function(req, res) {
       errors: true
     });
   } else {
-     var id = req.params.id;
+    var id = req.params.id;
     var token = req.get("token");
     common.checksession(db, token, function(returnValue) {
       if (returnValue) {
         if (req.body.eventname !== "" && req.body.eventstarttime != "" && req.body.eventname != null && req.body.eventstarttime != null && req.body.eventendtime != null && req.body.eventendtime != null && req.body.roomid != null && req.body.roomid != null && req.body.eventcreatedby != null && req.body.eventcreatedby != null) {
-          var paremeters = {
-            event_name: req.body.eventname,
-            event_description: req.body.eventdescription,
-            event_start_time: req.body.eventstarttime,
-            event_end_time: req.body.eventendtime,
-            school_room_ID: req.body.roomid,
-            event_created_by: req.body.eventcreatedby,
-            event_url: req.body.eventurl
-          };
-          
-           var query = db.query('UPDATE event SET ? where event_ID = ? ', [paremeters, id], function(err, result) {
+
+          var filename = "";
+          if (req.body.eventimage !== "" && req.body.eventimage != null) {
+            var image = req.body.eventimage;
+            var base64Data = image.replace(/^data:image\/(png|gif|jpeg);base64,/, '');
+            filename = "/image/event/" + new Date().getTime() + ".png";
+            var filepathupload = "public" + filename;
+            fs.writeFile(filepathupload, new Buffer(base64Data, "base64"), function(err) {
+              if (err) console.log(err);
+            });
+          }
+          var paremeters = {};
+          if (req.body.eventimage !== "" && req.body.eventimage != null) {
+
+            paremeters = {
+              event_name: req.body.eventname,
+              event_description: req.body.eventdescription,
+              event_start_time: req.body.eventstarttime,
+              event_end_time: req.body.eventendtime,
+              school_room_ID: req.body.roomid,
+              event_created_by: req.body.eventcreatedby,
+              event_url: req.body.eventurl,
+              event_image: filename,
+            };
+          } else {
+            paremeters = {
+              event_name: req.body.eventname,
+              event_description: req.body.eventdescription,
+              event_start_time: req.body.eventstarttime,
+              event_end_time: req.body.eventendtime,
+              school_room_ID: req.body.roomid,
+              event_created_by: req.body.eventcreatedby,
+              event_url: req.body.eventurl
+            };
+          }
+          var query = db.query('UPDATE event SET ? where event_ID = ? ', [paremeters, id], function(err, result) {
             if (err) {
               res.statusCode = 200;
               return res.json({
@@ -310,7 +335,7 @@ router.put('/admin/:id', function(req, res) {
               });
             }
           });
-          
+
         } else {
           res.statusCode = 200;
           return res.json({

@@ -194,7 +194,8 @@ router.put('/', function (req, res) {
   }
 });
 
-router.put('/admin/student/:sid', function (req, res) {
+//create new student
+router.post('/admin/student/:sid', function (req, res) {
   var id = req.params.id;
   if (req.get("token") == null || req.get("token") == "") {
     res.statusCode = 200;
@@ -214,7 +215,7 @@ router.put('/admin/student/:sid', function (req, res) {
           });
         } else {
           var sid = req.params.sid;
-          if (req.body.username != "" && req.body.password != "" && req.body.username != null && req.body.password != null && req.body.studentid != null && req.body.studentid != null) {
+          if (req.body.username != "" && req.body.password != "" && req.body.username != null && req.body.password != null) {
             var username = req.body.username;
             var password = req.body.password;
             var paremeters = { secure_login_email: username };
@@ -261,11 +262,99 @@ router.put('/admin/student/:sid', function (req, res) {
                             });
                           }
                         });
+                        }
+                      }
+                    });
+                  });
+                }
+              }
+            });
+          } else {
+            res.statusCode = 200;
+            return res.json({
+              respond: "Missing Fields",
+              errors: true
+            });
+          }
+        }
+      } else {
+        res.statusCode = 200
+        return res.json({
+          respond: "Invalid session",
+          errors: true
+        });
+      }
+    });
+  }
+});
+
+router.post('/admin/admin/:sid', function (req, res) {
+  var id = req.params.id;
+  if (req.get("token") == null || req.get("token") == "") {
+    res.statusCode = 200;
+    return res.json({
+      respond: "Invalid Token Key",
+      errors: true
+    });
+  } else {
+    var token = req.get("token");
+    common.checksessionadmin(db, token, function (returnValue) {
+      if (returnValue) {
+        if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
+          res.statusCode = 200;
+          return res.json({
+            respond: "Missing Fields",
+            errors: true
+          });
+        } else {
+          var sid = req.params.sid;
+          if (req.body.username != "" && req.body.password != "" && req.body.username != null && req.body.password != null) {
+            var username = req.body.username;
+            var password = req.body.password;
+            var paremeters = { secure_login_email: username };
+            db.query('SELECT secure_login_ID from secure_login where ? ', paremeters, function (err, rows, fields) {
+              if (err) {
+                res.statusCode = 200;
+                return res.json({
+                  respond: "Creating Account Failed , Database Error",
+                  errors: true
+                });
+              } else {
+                if (rows.length) {
+                  res.statusCode = 200;
+                  return res.json({
+                    respond: "Email Already Existed ",
+                    errors: true
+                  });
+                } else {
+                  bcrypt.hash(password, 10, function (err, hash) {
+                    var paremeters = { secure_login_email: username, secure_login_password: hash };
+                    var query = db.query('INSERT INTO secure_login SET ?', paremeters, function (err, result) {
+                      if (err) {
+                        res.statusCode = 200;
+                        return res.json({
+                          respond: "Creating Account Failed , Database Error",
+                          errors: true
+                        });
+                      } else {
+                        if (result) {
+                          var adminid = result.insertId;
                           
-                          return res.json({
-                            success: "Successfully Created Account",
-                            errors: false
-                          });
+                          
+                          var query = db.query('UPDATE admin SET secure_login_ID = ? where admin_ID = ? ', [adminid, sid], function(err, result) {
+                          if (err) {
+                            res.statusCode = 200;
+                            return res.json({
+                              respond: "Database error",
+                              error: true
+                            });
+                          } else {
+                            return res.json({
+                              respond: "Successfully Updated ",
+                              errors: false
+                            });
+                          }
+                        });
                         }
                       }
                     });

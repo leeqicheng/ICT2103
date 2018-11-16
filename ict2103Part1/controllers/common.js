@@ -53,10 +53,42 @@ exports.checksessionadmin = function (db, token, callback) {
     });
 }
 
-exports.checkstudentbymatrics = function (db, matrics, callback) {
+exports.checkstudentbymatrics = function (db, ID, callback) {
     // check if text is between min and max length
-    var paremeters1 = { student_matrics : matrics };
+    var paremeters1 = { student_ID : ID };
     db.query('SELECT student_ID from student where ?', [paremeters1], function (err, rows, fields) {
+        if (err) {
+            callback(false);
+        } else {
+            if (rows.length) {
+                callback(true);
+            } else {
+                callback(false);
+            } 
+        }
+    });
+}
+
+exports.checkstudentbymatricsrevise = function (db, ID, callback) {
+    // check if text is between min and max length
+    var paremeters1 = { student_matrics : ID };
+    db.query('SELECT student_ID from student where ?', [paremeters1], function (err, rows, fields) {
+        if (err) {
+            callback(false);
+        } else {
+            if (rows.length) {
+                callback(true);
+            } else {
+                callback(false);
+            } 
+        }
+    });
+}
+
+exports.checkadminbymatrics = function (db, ID, callback) {
+    // check if text is between min and max length
+    var paremeters1 = { admin_matrics : ID };
+    db.query('SELECT admin_ID from admin where ?', [paremeters1], function (err, rows, fields) {
         if (err) {
             callback(false);
         } else {

@@ -18,8 +18,11 @@ app.use(bodyParser.json());
 
 var loginController    = require('./controllers/login');
 app.use('/login', loginController);
-var booksController    = require('./controllers/books');
-app.use('/books', booksController);
+var locationController    = require('./controllers/location');
+app.use('/location', locationController);
+
+var schoolroomController    = require('./controllers/schoolroom');
+app.use('/schoolroom', schoolroomController);
 
 var dir = path.join(__dirname, 'public');
 

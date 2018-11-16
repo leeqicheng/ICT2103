@@ -1,12 +1,14 @@
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
 
-var DATABASEUSERNAME = "ict2103";
-var DATABASEPASSWORD = "cat123";
-var DATABASEHOST = "ds141613.mlab.com";
-
+//var DATABASEUSERNAME = "ict2103";
+//var DATABASEPASSWORD = "cat123";
+//var DATABASEHOST = "ds141613.mlab.com";
+var DATABASEUSERNAME = "root";
+var DATABASEPASSWORD = "cat123456!";
+var DATABASEHOST  =  'dds-gs57708942855bd41133-pub.mongodb.singapore.rds.aliyuncs.com:3717,dds-gs57708942855bd42248-pub.mongodb.singapore.rds.aliyuncs.com'
 // Connection URL
-const url = 'mongodb://' + DATABASEUSERNAME + ':' + DATABASEPASSWORD + '@' + DATABASEHOST + ':41613' + '/ict2103';
+const url = 'mongodb://' + DATABASEUSERNAME + ':' + DATABASEPASSWORD + '@' + DATABASEHOST + ':3717' + '/admin?replicaSet=mgset-300212889';
 
 var connection = [];
 // Create the database connection

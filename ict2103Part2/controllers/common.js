@@ -44,9 +44,9 @@ exports.checksessionadmin = function(db, token, callback) {
   // check if text is between min and max length
   db.establishConnection(function(conn) {
     conn.collection("studentWithSecureLogin").find({
-      "secure_login_session_token": token
+      "secure_login_session_token": token,
     }, {
-      "secure_login_ID": "$secure_login_ID"
+      "secure_login_admin": "$secure_login_admin"
     }).toArray(function(err, rows, fields) {
       if (err) {
         callback(false);
@@ -65,15 +65,10 @@ exports.checksessionadmin = function(db, token, callback) {
   });
 }
 
-exports.checkstudentbymatrics = function(db, matrics, callback) {
+exports.checkstudentbymatrics = function(db, id, callback) {
   // check if text is between min and max length
-
   db.establishConnection(function(conn) {
-    conn.collection("studentWithSecureLogin").find({
-      "secure_login_session_token": token
-    }, {
-      "secure_login_ID": "$secure_login_ID"
-    }).toArray(function(err, rows, fields) {
+    conn.collection("studentWithSecureLogin").find({"student_ID": parseInt(id) }).toArray(function(err, rows, fields) {
       if (err) {
         callback(false);
       } else {

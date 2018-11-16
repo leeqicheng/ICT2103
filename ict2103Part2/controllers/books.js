@@ -12,7 +12,6 @@ var parser = new xml2js.Parser();
 var APIToken = 'REVWLVFpQ2hlbmc6UWlDaGVuZ0luTkxCQDheX144';
 var url = 'http://openweb-stg.nlb.gov.sg/OWS/CatalogueService.svc?singleWsdl';
 
-
 // Get all popular book
 router.get('/popular', function (req, res) {
     if (req.get("token") == null || req.get("token") == "") {
