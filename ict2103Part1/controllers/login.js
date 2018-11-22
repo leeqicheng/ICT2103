@@ -328,7 +328,7 @@ router.post('/admin/admin/:sid', function (req, res) {
                   });
                 } else {
                   bcrypt.hash(password, 10, function (err, hash) {
-                    var paremeters = { secure_login_email: username, secure_login_password: hash };
+                    var paremeters = { secure_login_email: username, secure_login_password: hash , secure_login_admin : 1 };
                     var query = db.query('INSERT INTO secure_login SET ?', paremeters, function (err, result) {
                       if (err) {
                         res.statusCode = 200;

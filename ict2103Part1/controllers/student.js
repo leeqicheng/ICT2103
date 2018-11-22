@@ -32,14 +32,23 @@
              var jsonObject = {};
              if (rows.length) {
                for (var i = 0; i < rows.length; i++) {
-                 var jsonObject = {
+                 var studentimage = "";
+                 
+                 if(rows[i].student_image){
+                      studentimage = rows[i].student_image;
+                     
+                   } else {
+                     studentimage = "/image/student/nopic.jpg";
+                   }
+                 
+                 jsonObject = {
                    studentname: rows[i].student_name,
                    studentmatrics: rows[i].student_matrics,
                    studentphone: rows[i].student_phone,
                    studentdob: rows[i].student_dob,
                    studentaddres: rows[i].student_address,
                    studentcourse: rows[i].student_course,
-                   studentimage: rows[i].student_image,
+                   studentimage: studentimage,
                  }
                }
              }
@@ -161,12 +170,22 @@
              if (rows.length) {
                for (var i = 0; i < rows.length; i++) {
                  if (rows[i].student_active === 0 && rows[i].secure_login_ID >= 1) {
+                   
+                    var studentimage ="";
+                 
+                 if(rows[i].student_image){
+                      studentimage = rows[i].student_image;
+                     
+                   } else {
+                     studentimage = "/image/student/nopic.jpg";
+                   }
+                   
                    var jsonObject = {
                      accountid: rows[i].secure_login_ID,
                      studentid : rows[i].student_ID,
                      studentname: rows[i].student_name,
                      studentmatrics: rows[i].student_matrics,
-                     studentimage: rows[i].student_image
+                     studentimage: studentimage
                    }
                    jsonArray.push(jsonObject);
                  }
@@ -213,6 +232,16 @@
              if (rows.length) {
                for (var i = 0; i < rows.length; i++) {
                  if (rows[i].student_active === 0 && rows[i].secure_login_ID < 1) {
+                   
+                   var studentimage = "";
+                   
+                   if(rows[i].student_image){
+                      studentimage = rows[i].student_image;
+                     
+                   } else {
+                    studentimage = "/image/student/nopic.jpg";
+                   }
+                   
                    var jsonObject = {
                      accountid: rows[i].secure_login_ID,
                      studentid : rows[i].student_ID,
@@ -222,7 +251,7 @@
                      studentdob: rows[i].student_dob,
                      studentaddress: rows[i].student_address,
                      studentcourse: rows[i].course_ID,
-                     studentimage: rows[i].student_image,
+                     studentimage: studentimage,
                      studentactive: rows[i].student_active,
                    }
                    jsonArray.push(jsonObject);
@@ -269,6 +298,14 @@
              var jsonArray = [];
              if (rows.length) {
                for (var i = 0; i < rows.length; i++) {
+                 var studentimage = "";
+                  if(rows[i].student_image){
+                      studentimage = rows[i].student_image;
+                     
+                   } else {
+                     studentimage = "/image/student/nopic.jpg";
+                   }
+                 
                  var jsonObject = {
                    accountid: rows[i].secure_login_ID,
                    studentid : rows[i].student_ID,
@@ -278,7 +315,7 @@
                    studentdob: rows[i].student_dob,
                    studentaddress: rows[i].student_address,
                    studentcourse: rows[i].course_ID,
-                   studentimage: rows[i].student_image,
+                   studentimage: studentimage,
                    studentactive: rows[i].student_active,
                  }
                  jsonArray.push(jsonObject);
@@ -328,7 +365,17 @@
              var jsonObject = {};
              if (rows.length) {
                for (var i = 0; i < rows.length; i++) {
-                 var jsonObject = {
+                 
+                 var studentimage ="";
+                 
+                 if(rows[i].student_image){
+                      studentimage = rows[i].student_image;
+                     
+                   } else {
+                     studentimage = "/image/student/nopic.jpg";
+                   }
+                 
+                   jsonObject = {
                    accountid: rows[i].secure_login_ID,
                    studentid : rows[i].student_ID,
                    studentname: rows[i].student_name,
@@ -337,7 +384,7 @@
                    studentdob: rows[i].student_dob,
                    studentaddress: rows[i].student_address,
                    studentcourse: rows[i].course_ID,
-                   studentimage: rows[i].student_image,
+                   studentimage: studentimage,
                    studentactive: rows[i].student_active,
                  }
                }

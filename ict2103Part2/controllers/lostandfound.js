@@ -86,34 +86,48 @@ router.post('/', function(req, res) {
           }
           common.getstudentid(db, token, function(returnValue) {
             if (returnValue > 0) {
-              var paremeters = {
-                lost_found_image: filename,
-                school_room_ID: req.body.schoolroom,
-                lost_found_description: req.body.description,
-                secure_login_ID: returnValue,
-              };
               db.establishConnection(function(conn) {
-                conn.collection("LostAndFound").insertOne(paremeters, function(err, result) {
-                  if (err) {
-                    res.statusCode = 200
-                    return res.json({
-                      respond: "Database ran into problem",
-                      errors: truelost_found
-                    });
+                conn.collection("LostAndFound").find({}, {
+                  lost_found_ID: "$lost_found_ID"
+                }).sort({
+                  lost_found_ID: -1
+                }).limit(1).toArray(function(err, rows, fields) {
+                  var lfid;
+                  if (rows.length) {
+                    lfid = rows[0].lost_found_ID;
                   } else {
-                    if (result) {
-                      return res.json({
-                        respond: "Successfully reported",
-                        errors: false
-                      });
-                    } else {
+                    lfid = 0;
+                  }
+                  var paremeters = {
+                    lost_found_ID: parseInt(lfid) + 1,
+                    lost_found_image: filename,
+                    school_room_ID: req.body.schoolroom,
+                    lost_found_description: req.body.description,
+                    secure_login_ID: returnValue,
+                  };
+                  conn.collection("LostAndFound").insertOne(paremeters, function(err, result) {
+                    if (err) {
                       res.statusCode = 200
                       return res.json({
-                        respond: "Report failed",
-                        errors: true
+                        respond: "Database ran into problem",
+                        errors: truelost_found
                       });
+                    } else {
+                      if (result) {
+                        return res.json({
+                          respond: "Successfully reported",
+                          errors: false
+                        });
+                      } else {
+                        res.statusCode = 200
+                        return res.json({
+                          respond: "Report failed",
+                          errors: true
+                        });
+                      }
                     }
-                  }
+                  });
+
                 });
               });
 

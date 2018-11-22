@@ -2,7 +2,7 @@
  var router = express.Router();
  var db = require('./connection.js'); // db is pool
  var common = require('./common.js');
-
+ var fs = require("fs");
  //retrieve student information based on token
  router.get('/', function(req, res) {
    if (req.get("token") == null || req.get("token") == "") {
@@ -143,7 +143,7 @@
    }
  });
 
- router.get('/studentlist', function(req, res) {
+ router.get('/studentlist/noaccount', function(req, res) {
 
    if (req.get("token") == null || req.get("token") == "") {
      res.statusCode = 200;
@@ -156,7 +156,14 @@
      common.checksession(db, token, function(returnValue) {
        if (returnValue) {
          db.establishConnection(function(conn) {
-           conn.collection("studentWithSecureLogin").find().toArray(function(err, rows, fields) {
+           conn.collection("studentWithSecureLogin").find({
+             student_ID: {
+               $exists: true
+             },
+             secure_login_email: {
+               $exists: false
+             }
+           }).toArray(function(err, rows, fields) {
              if (err) {
                res.statusCode = 200
                return res.json({
@@ -166,14 +173,29 @@
              } else {
                var jsonArray = [];
                if (rows.length) {
+                 console.log("Getting student")
                  for (var i = 0; i < rows.length; i++) {
-                   if (rows[i].student_active === 0 && rows[i].secure_login_ID >= 1) {
+                   if (rows[i].student_active === 0 && rows[i].secure_login_ID >= 0) {
+
+                     var studentimage = "";
+
+                     if (rows[i].student_image) {
+                       studentimage = rows[i].student_image;
+
+                     } else {
+                       studentimage = "/image/student/nopic.jpg";
+                     }
                      var jsonObject = {
-                       accountid: rows[i].secure_login_ID,
+                       studentid: rows[i].student_ID,
                        studentname: rows[i].student_name,
                        studentmatrics: rows[i].student_matrics,
-                       studentimage: rows[i].student_image
+                       studentphone: rows[i].student_phone,
+                       studentdob: rows[i].student_dob,
+                       studentaddress: rows[i].student_address,
+                       studentimage: studentimage,
+                       studentcourse: rows[i].course_ID
                      }
+                     console.log(rows[i].student_ID)
                      jsonArray.push(jsonObject);
                    }
                  }
@@ -210,7 +232,11 @@
      common.checksessionadmin(db, token, function(returnValue) {
        if (returnValue) {
          db.establishConnection(function(conn) {
-           conn.collection("studentWithSecureLogin").find().toArray(function(err, rows, fields) {
+           conn.collection("studentWithSecureLogin").find({
+             student_ID: {
+               $exists: true
+             }
+           }).toArray(function(err, rows, fields) {
              if (err) {
                res.statusCode = 200
                return res.json({
@@ -268,7 +294,7 @@
        if (returnValue) {
 
          db.establishConnection(function(conn) {
-           conn.colection("studentWithSecureLogin").find({
+           conn.collection("studentWithSecureLogin").find({
              "student_ID": req.params.id
            }).toArray(function(err, rows, fields) {
              if (err) {
@@ -346,34 +372,76 @@
                      errors: true
                    });
                  } else {
-                   var createstudent_query = {
-                     student_name: req.body.name,
-                     student_matrics: req.body.matrics,
-                     student_phone: req.body.phone,
-                     student_dob: req.body.dob,
-                     student_address: req.body.address,
-                     student_image: req.body.image,
-                     secure_login_ID: req.body.accountid,
-                     course_ID: req.body.courseid,
-                     student_active: req.body.active
-                   };
-                   conn.collection("studentWithSecureLogin").insertOne(createstudent_query, function(err, result) {
-                     if (err) {
-                       console.log(err)
-                       res.statusCode = 200;
-                       return res.json({
-                         respond: "Creating Student Failed , Database Error",
-                         errors: true
-                       });
+                   var filename = "";
+                   if (req.body.image !== "" && req.body.image != null) {
+                     var image = req.body.image;
+                     var base64Data = image.replace(/^data:image\/(png|gif|jpeg);base64,/, '');
+                     filename = "/image/student/" + new Date().getTime() + ".png";
+                     var filepathupload = "public" + filename;
+                     fs.writeFile(filepathupload, new Buffer(base64Data, "base64"), function(err) {
+                       if (err) console.log(err);
+                     });
+                   }
+
+                   conn.collection("studentWithSecureLogin").find({}, {
+                     student_ID: "$student_ID"
+                   }).sort({
+                     student_ID: -1
+                   }).limit(1).toArray(function(err, rows, fields) {
+                     var studentID;
+                     if (rows.length) {
+                       studentID = rows[0].student_ID;
                      } else {
-                       if (result) {
-                         return res.json({
-                           success: "Successfully Created Student",
-                           errors: false
-                         });
-                       }
+                       studentID = 0;
                      }
+                     var createstudent_query = {};
+                     if (req.body.image !== "" && req.body.image != null) {
+                       createstudent_query = {
+                         student_ID: parseInt(studentID) + 1,
+                         student_name: req.body.name,
+                         student_matrics: parseInt(req.body.matrics),
+                         student_phone: req.body.phone,
+                         student_dob: req.body.dob,
+                         student_address: req.body.address,
+                         student_image: filename,
+                         secure_login_ID: 0,
+                         course_ID: parseInt(req.body.courseid),
+                         student_active: parseInt(req.body.active)
+                       };
+                     } else {
+                       createstudent_query = {
+                         student_ID: parseInt(studentID) + 1,
+                         student_name: req.body.name,
+                         student_matrics: parseInt(req.body.matrics),
+                         student_phone: req.body.phone,
+                         student_dob: req.body.dob,
+                         student_address: req.body.address,
+                         secure_login_ID: 0,
+                         course_ID: parseInt(req.body.courseid),
+                         student_active: parseInt(req.body.active)
+                       };
+                     }
+                     conn.collection("studentWithSecureLogin").insertOne(createstudent_query, function(err, result) {
+                       if (err) {
+                         console.log(err)
+                         res.statusCode = 200;
+                         return res.json({
+                           respond: "Creating Student Failed , Database Error",
+                           errors: true
+                         });
+                       } else {
+                         if (result) {
+                           return res.json({
+                             success: "Successfully Created Student",
+                             errors: false
+                           });
+                         }
+                       }
+                     });
+
                    });
+
+
                  }
                }
              });
@@ -412,28 +480,39 @@
          console.log(id);
          common.checkstudentbymatrics(db, id, function(matrics_true) {
            console.log(matrics_true)
+
            if (matrics_true) {
              if (req.body.name != "" && req.body.name != null && req.body.matrics != "" && req.body.matrics != null && req.body.phone != "" && req.body.phone != null && req.body.dob != "" && req.body.dob != null && req.body.address != "" && req.body.address != null && req.body.courseid != "" && req.body.courseid != null) {
                var phone = req.body.phone;
                var address = req.body.address;
+               var filename = "";
+               if (req.body.image !== "" && req.body.image != null) {
+                 var image = req.body.image;
+                 var base64Data = image.replace(/^data:image\/(png|gif|jpeg);base64,/, '');
+                 filename = "/image/student/" + new Date().getTime() + ".png";
+                 var filepathupload = "public" + filename;
+                 fs.writeFile(filepathupload, new Buffer(base64Data, "base64"), function(err) {
+                   if (err) console.log(err);
+                 });
+               }
                var paremeters1 = {
                  secure_login_session_token: token
                };
                var updatequery1 = {
                  $set: {
                    student_name: req.body.name,
-                   student_matrics: req.body.matrics,
-                   student_phone: req.body.phone,
+                   student_matrics: parseInt(req.body.matrics),
+                   student_phone: parseInt(req.body.phone),
                    student_dob: req.body.dob,
                    student_address: req.body.address,
-                   student_image: req.body.image,
-                   secure_login_ID: req.body.accountid,
-                   course_ID: req.body.courseid,
-                   student_active: req.body.active
+                   student_image: filename,
+                   secure_login_ID: parseInt(req.body.accountid),
+                   course_ID: parseInt(req.body.courseid),
+                   student_active: parseInt(req.body.active)
                  }
                };
                var updatequery2 = {
-                 student_ID: id
+                 student_matrics: parseInt(id)
                }
                db.establishConnection(function(conn) {
                  conn.collection("studentWithSecureLogin").updateOne(updatequery2, updatequery1, function(err, result) {

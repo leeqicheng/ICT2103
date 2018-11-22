@@ -3,6 +3,8 @@ var router = express.Router();
 var db = require('./connection.js'); // db is pool
 var common = require('./common.js');
 const bcrypt = require('bcrypt');
+var nodemailer = require('nodemailer');
+var randomstring = require("randomstring");
 // Change password
 router.post('/password', function(req, res) {
   if (req.get("token") == null || req.get("token") == "") {
@@ -111,6 +113,98 @@ router.post('/password', function(req, res) {
           errors: true
         });
       }
+    });
+  }
+});
+
+router.post('/forget', function(req, res) {
+  if (req.body.email !== null && req.body.email !== "null") {
+    var paremeters1 = {
+      secure_login_email: req.body.email
+    };
+    db.establishConnection(function(conn){
+      conn.collection("studentWithSecureLogin").find({secure_login_email:req.body.email}).toArray(function(err, rows, fields){
+        if (err) {
+        res.statusCode = 200
+        return res.json({
+          respond: "Database problem",
+          errors: true
+        });
+      } else {
+        if (rows.length) {
+
+          var newpassword = randomstring.generate(7);
+
+          bcrypt.hash(newpassword, 10, function(err, hash) {
+            if (err) {
+              res.statusCode = 200;
+              return res.json({
+                respond: "Something went wrong",
+                error: true
+              });
+            } else {
+              var updatequery1 = {
+                $set:{
+                  secure_login_password: hash
+                }                
+              };
+              var updatequery2 = {
+                secure_login_ID: rows[0].secure_login_ID
+              };
+              conn.collection("studentWithSecureLogin").updateOne(updatequery2, updatequery1, function(err, result){
+                if (err) {
+                  res.statusCode = 200;
+                  return res.json({
+                    respond: "Database error",
+                    error: true
+                  });
+                } else {
+                  var transporter = nodemailer.createTransport({
+                    service: 'gmail',
+                    auth: {
+                      user: 'ICT2102AY1819TEAM08@gmail.com',
+                      pass: 'cat123!@#'
+                    }
+                  });
+                  var mailOptions;
+
+                  mailOptions = {
+                    from: 'ICT2103 Admin Team',
+                    to: req.body.email,
+                    subject: 'Password reset',
+                    html: 'HI <br /> Password Change Successfully <br /> <b> New password : ' + newpassword
+                  };
+
+                  transporter.sendMail(mailOptions, function(error, info) {
+                    if (error) {
+                      console.log(error);
+                    } else {
+                      console.log('Email sent: ' + info.response);
+                    }
+                    return res.json({
+                      respond: "Successful Requested",
+                      errors: false
+                    });
+                  });
+                }
+              });
+            }
+          });
+        } else {
+          res.statusCode = 200
+          return res.json({
+            respond: "Email Not found",
+            errors: true
+          });
+        }
+      }
+      });
+    });
+  } else {
+    res.statusCode = 200
+    return res.json({
+      respond: "Missing Fields",
+      errors: true
     });
   }
 });

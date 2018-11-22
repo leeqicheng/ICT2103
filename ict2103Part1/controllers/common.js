@@ -117,3 +117,21 @@ exports.checkeventjoinstatus = function (db, studentID , event_id , callback) {
         }
     });
 }
+
+exports.getstudentbasedonstudenttable = function (db, secure_login, callback) {
+    // clean it and return
+    var studentid = 0;
+    var paremeters1 = { secure_login_ID: secure_login };
+    db.query('select * from student where ?', [paremeters1], function (err, rows, fields) {
+        if (err) {
+            callback(0);
+        } else {
+            if (rows.length) {
+                studentid = rows[0].student_ID;
+                callback(studentid);
+            } else {
+                callback(0);
+            }
+        }
+    });
+}

@@ -40,6 +40,7 @@
     "passport-local": "latest",
     "pm2": "latest",
     "rand-token": "^0.4.0",
+    "randomstring": "^1.1.5",
     "request": "latest",
     "serve-favicon": "^2.5.0",
     "simple-encryptor": "latest",

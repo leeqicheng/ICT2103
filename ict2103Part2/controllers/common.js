@@ -68,7 +68,25 @@ exports.checksessionadmin = function(db, token, callback) {
 exports.checkstudentbymatrics = function(db, id, callback) {
   // check if text is between min and max length
   db.establishConnection(function(conn) {
-    conn.collection("studentWithSecureLogin").find({"student_ID": parseInt(id) }).toArray(function(err, rows, fields) {
+    conn.collection("studentWithSecureLogin").find({"student_matrics": parseInt(id) }).toArray(function(err, rows, fields) {
+      if (err) {
+        callback(false);
+      } else {
+        if (rows.length) {
+          callback(true);
+        } else {
+          callback(false);
+        }
+      }
+    });
+  });
+}
+exports.checkadminbymatrics = function(db, id, callback) {
+  // check if text is between min and max length
+  console.log(id);
+  console.log(typeof id);
+  db.establishConnection(function(conn) {
+    conn.collection("studentWithSecureLogin").find({"admin_matrics": id }).toArray(function(err, rows, fields) {
       if (err) {
         callback(false);
       } else {
@@ -104,3 +122,26 @@ exports.checkeventjoinstatus = function(db, studentID, event_id, callback) {
     });
   });
 }
+
+
+exports.getstudentbasedonstudenttable = function (db, secure_login, callback) {
+    // clean it and return
+    var studentid = 0;
+    var paremeters1 = { secure_login_ID: secure_login };
+    db.establishConnection(function(conn){
+      conn.collection("studentWithSecureLogin").find({secure_login_ID: secure_login, student_ID:{$exists: true}}).toArray(function(err, rows, fields){
+        if (err) {
+            callback(0);
+        } else {
+            if (rows.length) {
+                studentid = rows[0].student_ID;
+                callback(studentid);
+            } else {
+                callback(0);
+            }
+        }
+      });
+    });
+}
+
+

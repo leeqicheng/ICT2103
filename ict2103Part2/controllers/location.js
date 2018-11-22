@@ -190,34 +190,38 @@ router.post('/admin', function(req, res) {
               }).sort({
                 location_ID: -1
               }).limit(1).toArray(function(err, rows, fields) {
+                var locID;
                 if (rows.length) {
-                  var locID = rows[0].location_ID;
-                  var paremeters = {
-                    location_ID: locID + 1,
-                    location_name: req.body.name,
-                    location_address: req.body.address,
-                    location_lat: req.body.lat,
-                    location_long: req.body.long,
-                    location_description: req.body.description,
-                    location_opening: req.body.opening
-                  };
-                  conn.collection("location").insertOne(paremeters, function(err, result) {
-                    if (err) {
-                      res.statusCode = 200
-                      return res.json({
-                        respond: "Create Location failed",
-                        errors: true
-                      });
-                    } else {
-                      if (result) {
-                        return res.json({
-                          respond: "Successfuly Created Location",
-                          errors: false
-                        });
-                      }
-                    }
-                  });
+                  locID = parseInt(rows[0].location_ID);
+                } else {
+                  locID = 0;
                 }
+                var paremeters = {
+                  location_ID: locID + 1,
+                  location_name: req.body.name,
+                  location_address: req.body.address,
+                  location_lat: req.body.lat,
+                  location_long: req.body.long,
+                  location_description: req.body.description,
+                  location_opening: req.body.opening
+                };
+                conn.collection("location").insertOne(paremeters, function(err, result) {
+                  if (err) {
+                    res.statusCode = 200
+                    return res.json({
+                      respond: "Create Location failed",
+                      errors: true
+                    });
+                  } else {
+                    if (result) {
+                      return res.json({
+                        respond: "Successfuly Created Location",
+                        errors: false
+                      });
+                    }
+                  }
+                });
+
               });
 
             });
@@ -249,7 +253,7 @@ router.put('/admin/:id', function(req, res) {
       errors: true
     });
   } else {
-    var id = req.params.id;
+    var id = parseInt(req.params.id);
     var token = req.get("token");
     common.checksessionadmin(db, token, function(returnValue) {
       if (returnValue) {
@@ -262,12 +266,15 @@ router.put('/admin/:id', function(req, res) {
         } else {
           if (req.body.name != "" && req.body.address != "" && req.body.name != null && req.body.address != null) {
             var updatequery1 = {
-              location_name: req.body.name,
-              location_address: req.body.address,
-              location_lat: req.body.lat,
-              location_long: req.body.long,
-              location_description: req.body.description,
-              location_opening: req.body.opening
+              $set: {
+                location_name: req.body.name,
+                location_address: req.body.address,
+                location_lat: req.body.lat,
+                location_long: req.body.long,
+                location_description: req.body.description,
+                location_opening: req.body.opening
+              }
+
             };
             var updatequery2 = {
               location_ID: id

@@ -15,14 +15,39 @@ app.use(bodyParser.urlencoded({limit: '1000mb', extended: true}))
 app.use(bodyParser.json());
 
 
-
 var loginController    = require('./controllers/login');
-app.use('/login', loginController);
-var locationController    = require('./controllers/location');
-app.use('/location', locationController);
+var userController    = require('./controllers/user');
+var studentController  = require('./controllers/student');
+var adminController  = require('./controllers/admin');
 
+app.use('/login', loginController);
+app.use('/user', userController);
+app.use('/student', studentController);
+app.use('/admin', adminController);
+
+var eventController    = require('./controllers/event');
+var locationController    = require('./controllers/location');
+var clinicController    = require('./controllers/clinic');
 var schoolroomController    = require('./controllers/schoolroom');
+var booksController    = require('./controllers/books');
+var weatherController    = require('./controllers/weather');
+var faultController    = require('./controllers/fault');
+var lostController    = require('./controllers/lostandfound');
+var courseController    = require('./controllers/course');
+var faultcloudController    = require('./controllers/faultcloud');
+var departmentController    = require('./controllers/department');
+
+app.use('/event', eventController);
+app.use('/location', locationController);
+app.use('/clinic', clinicController);
 app.use('/schoolroom', schoolroomController);
+app.use('/books', booksController);
+app.use('/weather', weatherController);
+app.use('/fault', faultController);
+app.use('/lost', lostController);
+app.use('/course', courseController);
+app.use('/faultcloud', faultcloudController);
+app.use('/department', departmentController);
 
 var dir = path.join(__dirname, 'public');
 

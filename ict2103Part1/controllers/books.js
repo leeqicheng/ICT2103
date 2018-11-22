@@ -115,6 +115,8 @@ router.post('/:page', function (req, res) {
                                     errors: false
                                 });
                             }
+                          
+                          console.log(result);
                             if (result.Status != "FAIL") {
                                 var json_result = []
 

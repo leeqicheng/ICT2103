@@ -126,8 +126,18 @@ router.post('/admin', function(req, res) {
           var sql_name = req.body.name;
           var sql_description = req.body.description;
           var sql_size = req.body.size;
-          var sql_locationid = req.body.locationid;
+          var sql_locationid = parseInt(req.body.locationid);
+          var locationname;
           db.establishConnection(function(conn) {
+            conn.collection("location").find({
+              location_ID: sql_locationid
+            }, {
+              location_name: "$location_name"
+            }).toArray(function(err, rows, fields) {
+              if (rows.length) {
+                locationname = rows[0].location_name
+              }
+            });
             conn.collection("SchoolroomwithLoc").find({}, {
               "school_room_ID": "$school_room_ID"
             }).sort({
@@ -135,15 +145,18 @@ router.post('/admin', function(req, res) {
             }).limit(1).toArray(function(err, rows, fields) {
               var schrmID2;
               if (rows.length) {
-                var schrmID = rows[0].school_room_ID;
+                var schrmID = parseInt(rows[0].school_room_ID);
                 schrmID2 = schrmID;
+              } else {
+                schrmID2 = 0;
               }
               var paremeters = {
                 school_room_ID: schrmID2 + 1,
                 school_room_name: sql_name,
-                school_room_size: sql_size,
+                school_room_size: parseInt(sql_size),
                 school_room_description: sql_description,
                 location_ID: sql_locationid,
+                location_name: locationname
               };
 
               conn.collection("SchoolroomwithLoc").insertOne(paremeters, function(err, result) {
@@ -199,37 +212,49 @@ router.put('/admin/:id', function(req, res) {
     });
   } else {
     var token = req.get("token");
-    var id = req.params.id;
+    var id = parseInt(req.params.id);
     common.checksessionadmin(db, token, function(returnValue) {
       if (returnValue) {
         if (req.body.name != "" || req.body.name != null && req.body.size != "" || req.body.size != null && req.body.locationid != "" || req.body.locationid != null) {
           var sql_name = req.body.name;
           var sql_description = req.body.description;
-          var sql_size = req.body.size;
-          var sql_locationid = req.body.locationid;
-          var updatequery1 = {
-            $set: {
-              school_room_name: sql_name,
-              school_room_size: sql_size,
-              school_room_description: sql_description,
-              location_ID: sql_locationid
-            }
-          };
-          var updatequery2 = {
-            school_room_ID: id
-          };
+          var sql_size = parseInt(req.body.size);
+          var sql_locationid = parseInt(req.body.locationid);
+          var locationname;
+
           db.establishConnection(function(conn) {
-            conn.collection("SchoolroomwithLoc").updateOne(updatequery2, updatequery1, function(err, result) {
-              if (err) {
-                res.statusCode = 200;
-                return res.json({
-                  respond: "Update School Room failed , Database problem",
-                  error: true
-                });
-              } else {
-                return res.json({
-                  respond: "Successfuly School Room",
-                  error: false
+            conn.collection("location").find({
+              location_ID: sql_locationid
+            }, {
+              location_name: "$location_name"
+            }).toArray(function(err, rows, fields) {
+              if (rows.length) {
+                locationname = rows[0].location_name;
+                var updatequery1 = {
+                  $set: {
+                    school_room_name: sql_name,
+                    school_room_size: sql_size,
+                    school_room_description: sql_description,
+                    location_ID: sql_locationid,
+                    location_name: locationname
+                  }
+                };
+                var updatequery2 = {
+                  school_room_ID: id
+                };
+                conn.collection("SchoolroomwithLoc").updateOne(updatequery2, updatequery1, function(err, result) {
+                  if (err) {
+                    res.statusCode = 200;
+                    return res.json({
+                      respond: "Update School Room failed , Database problem",
+                      error: true
+                    });
+                  } else {
+                    return res.json({
+                      respond: "Successfuly School Room",
+                      error: false
+                    });
+                  }
                 });
               }
             });

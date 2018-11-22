@@ -74,8 +74,9 @@ router.get('/status/:id', function(req, res) {
     var token = req.get("token");
     common.checksession(db, token, function(returnValue) {
       if (returnValue) {
-        common.getstudentid(db, token, function(studentid) {
-          if (studentid > 0) {
+        common.getstudentid(db, token, function(secure_login_id) {
+          if (secure_login_id > 0) {
+            common.getstudentbasedonstudenttable(db, secure_login_id, function(studentid) {
             db.query('SELECT join_event_ID from join_event where student_ID = ? and  event_ID = ?', [studentid, id], function(err, rows, fields) {
               if (err) {
                 res.statusCode = 200;
@@ -96,6 +97,7 @@ router.get('/status/:id', function(req, res) {
                   errors: false
                 });
               }
+            });
             });
           } else {
             res.statusCode = 200
@@ -130,53 +132,113 @@ router.post('/join/:id', function(req, res) {
     var token = req.get("token");
     common.checksession(db, token, function(returnValue) {
       if (returnValue) {
-        common.getstudentid(db, token, function(studentid) {
-          if (studentid > 0) {
-            db.query('SELECT * FROM join_event where event_ID = ? and student_ID = ?', [id, studentid], function(err, rows, fields) {
-              if (err) {
-                res.statusCode = 200;
-                return res.json({
-                  respond: " Database Error",
-                  errors: true
-                });
-              } else {
-                if (rows.length) {
+        common.getstudentid(db, token, function(secure_login_id) {
+          if (secure_login_id > 0) {
+            common.getstudentbasedonstudenttable(db, secure_login_id, function(studentid) {
+              db.query('SELECT * FROM join_event where event_ID = ? and student_ID = ?', [id, studentid], function(err, rows, fields) {
+                if (err) {
                   res.statusCode = 200;
                   return res.json({
-                    respond: "Student Already Join Event ",
+                    respond: " Database Error",
                     errors: true
                   });
                 } else {
-                  var paremeters = {
-                    event_ID: id,
-                    student_ID: studentid,
-                  };
-                  var query = db.query('INSERT INTO join_event SET ?', paremeters, function(err, result) {
-                    if (err) {
-                      res.statusCode = 200
-                      return res.json({
-                        respond: "Database ran into problem",
-                        errors: true
-                      });
-                    } else {
-                      if (result) {
-                        return res.json({
-                          respond: "Successfully Join Event",
-                          errors: false
-                        });
-                      } else {
+                  if (rows.length) {
+                    res.statusCode = 200;
+                    return res.json({
+                      respond: "Student Already Join Event ",
+                      errors: true
+                    });
+                  } else {
+                    var paremeters = {
+                      event_ID: id,
+                      student_ID: studentid,
+                    };
+                    var query = db.query('INSERT INTO join_event SET ?', paremeters, function(err, result) {
+                      if (err) {
                         res.statusCode = 200
                         return res.json({
-                          respond: "Failed Joining event",
+                          respond: "Database ran into problem",
                           errors: true
                         });
+                      } else {
+                        if (result) {
+                          return res.json({
+                            respond: "Successfully Join Event",
+                            errors: false
+                          });
+                        } else {
+                          res.statusCode = 200
+                          return res.json({
+                            respond: "Failed Joining event",
+                            errors: true
+                          });
+                        }
                       }
-                    }
-                  });
+                    });
+                  }
                 }
-              }
+              });
             });
           }
+        });
+      } else {
+        res.statusCode = 200
+        return res.json({
+          respond: "Invalid session",
+          errors: true
+        });
+      }
+    });
+  }
+});
+
+router.get('/join/status', function(req, res) {
+  if (req.get("token") == null || req.get("token") === "") {
+    res.statusCode = 200;
+    return res.json({
+      respond: "Invalid Token Key",
+      errors: true
+    });
+  } else {
+    var token = req.get("token");
+    common.checksession(db, token, function(returnValue) {
+      if (returnValue) {
+
+        common.getstudentid(db, token, function(studentid) {
+          db.query('select event_name , event_start_time , event_end_time , event_image , event_created_by , location_name , school_room_name , event_url from event e inner join join_event je inner join student s inner join school_room sr inner join location l where e.event_ID = je.event_ID and s.student_ID = je.student_ID and sr.school_room_ID = e.school_room_ID and l.location_ID = sr.location_ID and s.secure_login_ID = ?', studentid, function(err, rows, fields) {
+            if (err) {
+              console.log(err);
+              res.statusCode = 200
+              return res.json({
+                respond: "Database ran into some problem",
+                errors: true
+              });
+            } else {
+              var jsonArray = [];
+              if (rows.length) {
+                for (var i = 0; i < rows.length; i++) {
+
+                  var jsonObject = {
+                    eventname: rows[i].event_name,
+                    eventstarttime: rows[i].event_start_time,
+                    eventendtime: rows[i].event_end_time,
+                    eventlocation: rows[i].school_room_name,
+                    eventmainlocation: rows[i].location_name,
+                    eventcreatedby: rows[i].event_created_by,
+                    eventimage: rows[i].event_image,
+                    eventurl: rows[i].event_url
+
+                  }
+                  jsonArray.push(jsonObject);
+                }
+              }
+              return res.json({
+                respond: jsonArray,
+                errors: false
+              });
+            }
+          });
         });
       } else {
         res.statusCode = 200
